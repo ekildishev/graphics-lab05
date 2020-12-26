@@ -1,0 +1,234 @@
+<HTML>
+<BODY>
+<canvas id="lab05" width="500" height="400">
+</canvas>
+<script>
+    let canvas = document.getElementById("lab05");
+    let ctx = canvas.getContext("2d");
+
+    let idata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    let coordX = new Array()
+    let coordY = new Array()
+    let line = new Array()
+
+
+    function Line(x0, y0, x1, y1, type) {
+        let delta = 2 * (y1 - y0);
+        let eps = 0;
+        let y = y0;
+        let scale = 1;
+        if (y1 >= y0 && x1 < x0) {
+            if (y1 - y0 <= x0 - x1) {
+                Line(x1, y0, x0, y1, 2);
+            } else {
+                Line(y0, x1, y1, x0, 3);
+            }
+        } else if (y1 < y0 && x1 >= x0) {
+            if (y0 - y1 <= x1 - x0) {
+                Line(x0, y1, x1, y0, 2);
+            } else {
+                Line(y1, x0, y0, x1, 3);
+            }
+        } else if (y1 < y0 && x1 < x0) {
+            if (y0 - y1 <= x0 - x1) {
+                Line(x1, y1, x0, y0, 0);
+            } else {
+                Line(y1, x1, y0, x0, 1);
+            }
+        } else {
+            if (y1 >= y0 && x1 >= x0) {
+                if (y1 - y0 <= x1 - x0) {
+                    for (let x = x0; x < x1; ++x) {
+                        if (eps >= (x1 - x0)) {
+                            y += 1;
+                            eps -= 2 * (x1 - x0);
+                        }
+                        eps += delta;
+                        //console.log(ctx.getImageData(x, y, 1, 1).data[3]);
+                        if (type % 4 === 0) {
+                            ctx.fillStyle = 'ff0000';
+                            ctx.fillRect(x * scale, y * scale, scale, scale);
+                        } else if (type % 4 === 1) {
+                            ctx.fillStyle = 'ff0000';
+                            ctx.fillRect(y * scale, x * scale, scale, scale);
+                        } else if (type % 4 === 2) {
+                            ctx.fillStyle = 'ff0000';
+                            ctx.fillRect((x1 - x + x0) * scale, y * scale, scale, scale);
+                        } else {
+                            ctx.fillStyle = 'ff0000';
+                            ctx.fillRect((y1 - y + y0) * scale, x * scale, scale, scale);
+                        }
+                    }
+                } else {
+                    Line(y0, x0, y1, x1, 1);
+                }
+            }
+        }
+    }
+
+    function cutting(xl1, yl1, xl2, yl2) {
+        let tmin = 1.1;
+        let tmax = -0.1;
+        let imin;
+        let imax;
+
+        console.log(coordX)
+        console.log(coordY)
+        for (let i = 0; i < coordX.length - 1; i++) {
+            let t = ((yl1 - yl2) * (coordX[i] - xl1) + (xl2 - xl1) * (coordY[i] - yl1)) / ((coordX[i + 1] - coordX[i]) * (yl2 - yl1) + (coordY[i + 1] - coordY[i]) * (xl1 - xl2))
+            console.log("t ", t)
+            if (t <= 1 && t >= 0) {
+                if (t < tmin) {
+                    tmin = t;
+                    imin = i;
+                }
+                if (t > tmax) {
+                    tmax = t;
+                    imax = i;
+                }
+            }
+            //console.log("min ",tmin)
+            //console.log("max ",tmax)
+        }
+        let last = coordX.length - 1
+        let t = ((yl1 - yl2) * (coordX[last] - xl1) + (xl2 - xl1) * (coordY[last] - yl1)) / ((coordX[0] - coordX[last]) * (yl2 - yl1) + (coordY[0] - coordY[last]) * (xl1 - xl2))
+        console.log("t ", t)
+        if (t <= 1 && t >= 0) {
+            if (t < tmin) {
+                tmin = t;
+                imin = last;
+            }
+            if (t > tmax) {
+                tmax = t;
+                imax = last;
+            }
+        }
+        console.log("min ",tmin)
+        console.log("max ",tmax)
+        console.log("imin ",imin)
+        console.log("imax ",imax)
+
+        let xBegin
+        let xEnd
+        let yBegin
+        let yEnd
+
+        if (imin !== coordX.length-1){
+            xBegin = (coordX[imin + 1] - coordX[imin]) * tmin + coordX[imin];
+            yBegin = (coordY[imin + 1] - coordY[imin]) * tmin + coordY[imin];
+        } else {
+            xBegin = (coordX[0] - coordX[imin]) * tmin + coordX[imin];
+            yBegin = (coordY[0] - coordY[imin]) * tmin + coordY[imin];
+        }
+        if (imax !== coordX.length-1){
+            xEnd = (coordX[imax + 1] - coordX[imax]) * tmax + coordX[imax];
+            yEnd = (coordY[imax + 1] - coordY[imax]) * tmax + coordY[imax];
+        } else {
+            xEnd = (coordX[0] - coordX[imax]) * tmax + coordX[imax];
+            yEnd = (coordY[0] - coordY[imax]) * tmax + coordY[imax];
+        }
+
+
+        console.log(xBegin)
+        console.log(yBegin)
+        console.log(xEnd)
+        console.log(yEnd)
+
+
+        ctx.fillStyle = "#00ff00";
+        drawLine(xBegin, yBegin, xEnd, yEnd);
+        ctx.fillStyle = "#000000";
+    }
+
+    function drawLine(x0, y0, x1, y1) {
+        // if (!isPolygonDrawn) {
+        //     coordX.push(x0);
+        //     //console.log(coordX);
+        //     coordY.push(y0);
+        // }
+        //coordX.push(x0)
+        //coordY.push(y0)
+        if (y1 >= y0 && x1 >= x0) {
+            if (y1 - y0 <= x1 - x0) {
+                Line(x0, y0, x1, y1, 0);
+            } else {
+                Line(y0, x0, y1, x1, 1);
+            }
+        } else if (y1 >= y0 && x1 < x0) {
+            if (y1 - y0 <= x0 - x1) {
+                Line(x1, y0, x0, y1, 2);
+            } else {
+                Line(y0, x1, y1, x0, 3);
+            }
+        } else if (y1 < y0 && x1 >= x0) {
+            if (y0 - y1 <= x1 - x0) {
+                Line(x0, y1, x1, y0, 2);
+            } else {
+                Line(y1, x0, y0, x1, 3);
+            }
+        } else {
+            if (y0 - y1 <= x0 - x1) {
+                Line(x1, y1, x0, y0, 0);
+            } else {
+                Line(y1, x1, y0, x0, 1);
+            }
+        }
+    }
+
+    let point_index = 0;
+    let constx0 = 0;
+    let consty0 = 0;
+    let constx1 = 0;
+    let consty1 = 0;
+    let isStart = 0;
+    let isPolygonDrawn = false;
+
+    window.addEventListener("keypress", function (e) {
+        if (e.key === "Enter" && !isPolygonDrawn) {
+            if (isStart > 2) {
+                drawLine(constx0, consty0, constx1, consty1);
+                isPolygonDrawn = true;
+                point_index = 0;
+            }
+        }
+    });
+
+    canvas.addEventListener("click", function (e) {
+        if (!isPolygonDrawn) {
+            if (!point_index) {
+                x0 = e.offsetX;
+                y0 = e.offsetY;
+                coordX.push(x0)
+                coordY.push(y0)
+                if (isStart === 0) {
+                    constx0 = x0;
+                    consty0 = y0;
+                }
+                point_index = 1;
+                ++isStart;
+            } else {
+                x1 = e.offsetX;
+                y1 = e.offsetY;
+                coordX.push(x1)
+                coordY.push(y1)
+                drawLine(x0, y0, x1, y1);
+                ++isStart;
+                constx1 = x1;
+                consty1 = y1;
+                x0 = x1;
+                y0 = y1;
+            }
+        } else {
+            line.push(e.offsetX);
+            line.push(e.offsetY);
+            if (line.length % 4 === 0) {
+                drawLine(line[line.length - 4], line[line.length - 3], line[line.length - 2], line[line.length - 1]);
+                console.log(line)
+                cutting(line[line.length - 4], line[line.length - 3], line[line.length - 2], line[line.length - 1]);
+            }
+        }
+    });
+</script>
+</BODY>
+</HTML>
